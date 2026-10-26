@@ -1,4 +1,4 @@
-from sqlalchemy import select, exists, func
+from sqlalchemy import exists, func, select
 
 from src.core.repository import BaseRepository
 from src.users.models import User
@@ -17,4 +17,10 @@ class UserRepository(BaseRepository):
 
     async def get_user_by_email(self, email: str) -> User | None:
         result = await self.session.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+
+    async def search_user_by_email(self, email: str) -> User | None:
+        result = await self.session.execute(
+            select(User).where(func.lower(User.email) == email.strip().lower())
+        )
         return result.scalar_one_or_none()

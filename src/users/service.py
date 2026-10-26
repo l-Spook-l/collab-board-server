@@ -2,17 +2,17 @@ import logging
 
 from sqlalchemy.exc import IntegrityError
 
+from src.core.exceptions.custom_exceptions import (
+    NoFieldsToUpdateError,
+    PermissionDeniedError,
+    UserAlreadyExistsError,
+    UserCreateError,
+    UserDeleteError,
+    UserNotFoundError,
+    UserUpdateError,
+)
 from src.core.pagination import PaginationParams
 from src.core.security import hash_password
-from src.core.exceptions.custom_exceptions import (
-    UserNotFoundError,
-    UserAlreadyExistsError,
-    NoFieldsToUpdateError,
-    UserCreateError,
-    UserUpdateError,
-    UserDeleteError,
-    PermissionDeniedError,
-)
 from src.core.uow import UnitOfWork
 from src.users.models import User
 from src.users.schemas import UserCreateRequestSchema, UserUpdateRequestSchema
@@ -67,6 +67,13 @@ class UserService:
             raise UserNotFoundError()
 
         return {"user": user}
+
+    async def search_user_by_email(self, email: str) -> User | None:
+        user = await self.uow.users.search_user_by_email(email=email)
+        if not user:
+            raise UserNotFoundError()
+
+        return user
 
     async def update_user_by_id(
         self, user_id: int, data: UserUpdateRequestSchema, current_user_id: int

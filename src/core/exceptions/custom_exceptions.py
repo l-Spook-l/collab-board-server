@@ -60,6 +60,11 @@ class UserDeleteError(ConflictError):
         super().__init__(detail)
 
 
+class BoardNotFoundError(NotFoundError):
+    def __init__(self, detail: str = "Board not found"):
+        super().__init__(detail)
+
+
 class NoFieldsToUpdateError(BadRequestError):
     def __init__(self, detail: str = "No fields to update"):
         super().__init__(detail)

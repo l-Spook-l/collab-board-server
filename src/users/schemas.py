@@ -23,6 +23,14 @@ class UserResponseSchema(UserBaseSchema):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserSearchResponseSchema(BaseModel):
+    id: int
+    email: EmailStr
+    name: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UsersListResponseSchema(BaseModel):
     users: list[UserResponseSchema]
     page: int

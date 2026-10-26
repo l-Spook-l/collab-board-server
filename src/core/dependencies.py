@@ -1,12 +1,11 @@
 from fastapi import Depends, HTTPException, status
-
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.service import AuthService
+from src.boards.service import BoardService
 from src.core.database import get_async_session
 
-# from app.core.redis import get_redis_client
 from src.core.security import decode_access_token
 from src.core.uow import UnitOfWork
 from src.users.models import User
@@ -40,6 +39,10 @@ async def get_current_user(
 
 def get_user_service(uow: UnitOfWork = Depends(get_uow)) -> UserService:
     return UserService(uow=uow)
+
+
+def get_board_service(uow: UnitOfWork = Depends(get_uow)) -> BoardService:
+    return BoardService(uow=uow)
 
 
 def get_auth_service(

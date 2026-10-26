@@ -2,12 +2,14 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from src.boards.models.board import Board  # noqa: F401
+from src.boards.models.board_member import BoardMember  # noqa: F401
 from src.core.config import settings
 from src.core.database import Base
-from src.users.models import User
+from src.users.models import User  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
