@@ -1,8 +1,8 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: meduzzen_db
-    restart: always
+    container_name: collab_board_db
+    restart: "no"
     ports:
       - "5433:5432"
     env_file:
@@ -16,42 +16,6 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - mynetwork
-
-  # db_test:
-  #   image: postgres:16-alpine
-  #   container_name: meduzzen_db_test
-  #   restart: always
-  #   ports:
-  #     - "5533:5432"
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER_TEST}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_TEST}
-  #     POSTGRES_DB: ${POSTGRES_DB_TEST}
-  #   healthcheck:
-  #     test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   volumes:
-  #     - pgdata_test:/var/lib/postgresql/data_test
-  #   networks:
-  #     - mynetwork
-
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: meduzzen_redis
-  #   restart: always
-  #   ports:
-  #     - "6379:6379"
-  #   healthcheck:
-  #     test: [ "CMD", "redis-cli", "ping" ]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   volumes:
-  #     - redis_data:/data
-  #   networks:
-  #     - mynetwork
 
   app:
     build:
@@ -71,15 +35,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      # redis:
-        # condition: service_healthy
-
 
 
 volumes:
   pgdata:
-  # pgdata_test:
-  # redis_data:
+
 
 networks:
   mynetwork:

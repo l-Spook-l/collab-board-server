@@ -41,11 +41,11 @@ def decode_access_token(token: str) -> dict:
 
 def decode_auth0_token(token: str, jwks: dict) -> dict:
     try:
-        # Получаем заголовок JWT.
+        # Read the JWT header.
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
 
-        # Ищем нужный публичный ключ Auth0.
+        # Find the matching Auth0 public key.
         public_key = next(
             (
                 key
@@ -57,11 +57,11 @@ def decode_auth0_token(token: str, jwks: dict) -> dict:
             None,
         )
 
-        # Если подходящий ключ не найден — отклоняем токен.
+        # Reject the token if no matching key is found.
         if public_key is None:
             raise JWTError("Public key not found")
 
-        # Проверяем подпись и основные JWT claims.
+        # Verify the signature and essential JWT claims.
         payload = jwt.decode(
             token,
             public_key,
@@ -73,7 +73,7 @@ def decode_auth0_token(token: str, jwks: dict) -> dict:
         return payload
 
     except (JWTError, KeyError, ValueError) as e:
-        # Логируем причину, но не сам токен.
+        # Log the reason, but never the token itself.
         logger.warning("Auth0 JWT validation failed: %s", e)
 
         raise InvalidAuth0TokenError() from e
