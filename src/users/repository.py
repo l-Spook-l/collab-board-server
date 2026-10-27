@@ -19,6 +19,12 @@ class UserRepository(BaseRepository):
         result = await self.session.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
+    async def lock_user(self, user_id: int) -> User | None:
+        result = await self.session.execute(
+            select(User).where(User.id == user_id).with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     async def search_user_by_email(self, email: str) -> User | None:
         result = await self.session.execute(
             select(User).where(func.lower(User.email) == email.strip().lower())

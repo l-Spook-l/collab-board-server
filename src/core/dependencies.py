@@ -1,11 +1,13 @@
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.service import AuthService
+from src.billing.service import BillingService
 from src.boards.service import BoardService
 from src.core.database import get_async_session
-
 from src.core.security import decode_access_token
 from src.core.uow import UnitOfWork
 from src.users.models import User
@@ -20,8 +22,8 @@ def get_uow(session: AsyncSession = Depends(get_async_session)):
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-    session: AsyncSession = Depends(get_async_session),
+        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+        session: AsyncSession = Depends(get_async_session),
 ) -> User:
     token = credentials.credentials
     payload = decode_access_token(token)
@@ -45,8 +47,12 @@ def get_board_service(uow: UnitOfWork = Depends(get_uow)) -> BoardService:
     return BoardService(uow=uow)
 
 
+def get_billing_service(uow: UnitOfWork = Depends(get_uow)) -> BillingService:
+    return BillingService(uow=uow)
+
+
 def get_auth_service(
-    uow: UnitOfWork = Depends(get_uow),
-    user_service: UserService = Depends(get_user_service),
+        uow: UnitOfWork = Depends(get_uow),
+        user_service: UserService = Depends(get_user_service),
 ) -> AuthService:
     return AuthService(uow=uow, user_service=user_service)

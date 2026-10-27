@@ -97,6 +97,11 @@ class PermissionDeniedError(ForbiddenError):
         super().__init__(detail)
 
 
+class PlanLimitExceededError(PermissionDeniedError):
+    def __init__(self, detail: str):
+        super().__init__(detail)
+
+
 class CooldownError(TooManyRequestsError):
     def __init__(
         self,

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.billing.repository import BillingRepository
 from src.boards.repository import BoardRepository
 from src.users.repository import UserRepository
 
@@ -9,6 +10,7 @@ class UnitOfWork:
         self.session = session
         self.users = UserRepository(self.session)
         self.boards = BoardRepository(self.session)
+        self.billing = BillingRepository(self.session)
 
     async def __aenter__(self):
         return self

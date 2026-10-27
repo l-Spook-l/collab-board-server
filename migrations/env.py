@@ -5,6 +5,7 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from src.billing.models import BillingSubscription  # noqa: F401
 from src.boards.models.board import Board  # noqa: F401
 from src.boards.models.board_member import BoardMember  # noqa: F401
 from src.core.config import settings

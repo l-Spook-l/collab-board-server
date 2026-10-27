@@ -1,4 +1,4 @@
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from src.boards.models.board import Board
@@ -25,6 +25,30 @@ class BoardRepository(BaseRepository):
             select(Board).where(Board.id == board_id, Board.owner_id == owner_id)
         )
         return result.scalar_one_or_none()
+
+    async def get_owned_board_for_update(
+        self, board_id: int, owner_id: int
+    ) -> Board | None:
+        result = await self.session.execute(
+            select(Board)
+            .where(Board.id == board_id, Board.owner_id == owner_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    async def count_owned_boards(self, owner_id: int) -> int:
+        result = await self.session.scalar(
+            select(func.count(Board.id)).where(Board.owner_id == owner_id)
+        )
+        return int(result or 0)
+
+    async def count_invited_members(self, board_id: int) -> int:
+        result = await self.session.scalar(
+            select(func.count(BoardMember.user_id)).where(
+                BoardMember.board_id == board_id
+            )
+        )
+        return int(result or 0)
 
     async def list_accessible_boards(self, user_id: int) -> list[tuple[Board, str | None]]:
         result = await self.session.execute(

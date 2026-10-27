@@ -1,5 +1,10 @@
 import logging
 
+from src.billing.limits import (
+    FREE_MAX_OWNED_BOARDS,
+    has_pro_access,
+    max_invited_members,
+)
 from src.boards.models.board import Board
 from src.boards.schemas import (
     BoardCreateRequestSchema,
@@ -12,6 +17,7 @@ from src.boards.schemas import (
 from src.core.exceptions.custom_exceptions import (
     BoardNotFoundError,
     PermissionDeniedError,
+    PlanLimitExceededError,
     UserNotFoundError,
 )
 from src.core.uow import UnitOfWork
@@ -33,6 +39,18 @@ class BoardService:
             revision=1,
         )
         async with self.uow:
+            await self.uow.users.lock_user(owner_id)
+            subscription = await self.uow.billing.get_by_user_id(
+                owner_id, for_update=True
+            )
+            if (
+                not has_pro_access(subscription.status if subscription else None)
+                and await self.uow.boards.count_owned_boards(owner_id)
+                >= FREE_MAX_OWNED_BOARDS
+            ):
+                raise PlanLimitExceededError(
+                    "The Free plan allows up to 3 owned boards. Upgrade to Pro to create more."
+                )
             self.uow.boards.add(board)
             await self.uow.session.flush()
         logger.info(
@@ -149,11 +167,11 @@ class BoardService:
         self, board_id: int, owner_id: int, email: str
     ) -> BoardInviteResponseSchema:
         async with self.uow:
-            board = await self.uow.boards.get_owned_board(
+            board = await self.uow.boards.get_owned_board_for_update(
                 board_id=board_id, owner_id=owner_id
             )
             if not board:
-                exists = await self.uow.boards.get(model=Board, board_id=board_id)
+                exists = await self.uow.boards.get(model=Board, obj_id=board_id)
                 if not exists:
                     raise BoardNotFoundError()
                 logger.warning(
@@ -168,11 +186,31 @@ class BoardService:
             if user.id == owner_id:
                 raise PermissionDeniedError("The board owner already has access")
 
-            await self.uow.boards.add_member_if_missing(
-                board_id=board_id,
-                user_id=user.id,
-                invited_by_id=owner_id,
+            existing_member = await self.uow.boards.get_member(
+                board_id=board_id, user_id=user.id
             )
+            if existing_member is None:
+                subscription = await self.uow.billing.get_by_user_id(
+                    owner_id, for_update=True
+                )
+                member_limit = max_invited_members(
+                    subscription.status if subscription else None
+                )
+                member_count = await self.uow.boards.count_invited_members(board_id)
+                if member_count >= member_limit:
+                    is_pro = has_pro_access(
+                        subscription.status if subscription else None
+                    )
+                    plan = "Pro" if is_pro else "Free"
+                    raise PlanLimitExceededError(
+                        f"The {plan} plan allows up to {member_limit} invited people per board. "
+                        "Upgrade your plan to invite more."
+                    )
+                await self.uow.boards.add_member_if_missing(
+                    board_id=board_id,
+                    user_id=user.id,
+                    invited_by_id=owner_id,
+                )
 
             invited_member = BoardInviteResponseSchema(
                 id=user.id,

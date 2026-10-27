@@ -1,8 +1,8 @@
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, PostgresDsn, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Port = Annotated[int, Field(ge=0, le=65535)]
 NonEmptyStr = Annotated[str, Field(min_length=2)]
@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     DEBUG: bool
     ALLOWED_ORIGINS: list[str] = ["*"]
     LOG_LEVEL: NonEmptyStr
+    FRONTEND_URL: NonEmptyStr
+
+    STRIPE_SECRET_KEY: SecretStr
+    STRIPE_PRICE_ID: NonEmptyStr
+    STRIPE_WEBHOOK_SECRET: SecretStr
 
     postgres_user: NonEmptyStr
     postgres_password: SecretStr
