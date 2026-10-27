@@ -142,6 +142,28 @@ class BoardService:
         )
         return deleted_board
 
+    async def leave_board(self, board_id: int, user_id: int) -> None:
+        async with self.uow:
+            board = await self.uow.boards.get(model=Board, obj_id=board_id)
+            if not board:
+                raise BoardNotFoundError()
+            if board.owner_id == user_id:
+                raise PermissionDeniedError(
+                    "The board owner cannot leave their own board"
+                )
+
+            removed = await self.uow.boards.remove_member(
+                board_id=board_id,
+                user_id=user_id,
+            )
+            if not removed:
+                raise BoardNotFoundError("You are not a member of this board")
+
+        logger.info(
+            "User left shared board",
+            extra={"board_id": board_id, "user_id": user_id},
+        )
+
     async def save_document(
         self, board_id: int, user_id: int, document: dict
     ) -> int:

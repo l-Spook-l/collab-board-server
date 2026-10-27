@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 
 from src.boards.schemas import (
     BoardCreateRequestSchema,
@@ -11,8 +11,11 @@ from src.boards.schemas import (
     BoardResponseSchema,
 )
 from src.boards.service import BoardService
+from src.collaboration.websocket import (
+    notify_board_deleted,
+    notify_board_member_left,
+)
 from src.core.dependencies import get_board_service, get_current_user
-from src.collaboration.websocket import notify_board_deleted
 from src.users.models import User
 
 router = APIRouter(prefix="/boards", tags=["boards"])
@@ -58,6 +61,17 @@ async def delete_board(
     )
     await notify_board_deleted(board_id=deleted_board.id, title=deleted_board.title)
     return deleted_board
+
+
+@router.delete("/{board_id}/members/me", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_board(
+    board_id: int,
+    current_user: CurrentUserDep,
+    service: BoardServiceDep,
+) -> Response:
+    await service.leave_board(board_id=board_id, user_id=current_user.id)
+    await notify_board_member_left(board_id=board_id, user_id=current_user.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

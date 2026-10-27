@@ -47,6 +47,22 @@ async def notify_board_deleted(board_id: int, title: str) -> None:
         await sio.disconnect(sid)
 
 
+async def notify_board_member_left(board_id: int, user_id: int) -> None:
+    sids, presence = await connection_manager.remove_user_from_board(
+        board_id=board_id,
+        user_id=user_id,
+    )
+    for sid in sids:
+        await sio.emit("board:access_revoked", {"board_id": board_id}, to=sid)
+        await sio.disconnect(sid)
+    if sids:
+        await sio.emit(
+            "board:presence",
+            {"users": presence},
+            room=_board_room(board_id),
+        )
+
+
 async def _board_context(sid: str) -> tuple[int, dict[str, Any]] | None:
     user = connection_manager.get_user(sid)
     board_id = connection_manager.get_board_id(sid)

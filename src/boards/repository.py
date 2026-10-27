@@ -1,4 +1,4 @@
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from src.boards.models.board import Board
@@ -81,6 +81,15 @@ class BoardRepository(BaseRepository):
 
     async def get_member(self, board_id: int, user_id: int) -> BoardMember | None:
         return await self.session.get(BoardMember, (board_id, user_id))
+
+    async def remove_member(self, board_id: int, user_id: int) -> bool:
+        result = await self.session.execute(
+            delete(BoardMember).where(
+                BoardMember.board_id == board_id,
+                BoardMember.user_id == user_id,
+            )
+        )
+        return result.rowcount > 0
 
     async def add_member_if_missing(
         self, board_id: int, user_id: int, invited_by_id: int

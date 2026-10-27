@@ -85,6 +85,32 @@ class ConnectionManager:
                     self._sid_to_board.pop(sid, None)
             return sids
 
+    async def remove_user_from_board(
+        self, board_id: int, user_id: int
+    ) -> tuple[list[str], list[dict[str, Any]]]:
+        room = self._rooms.get(board_id)
+        if room is None:
+            return [], []
+
+        async with room.lock:
+            sids = [
+                sid
+                for sid, user in room.participants.items()
+                if user["id"] == user_id
+            ]
+            for sid in sids:
+                room.participants.pop(sid, None)
+            async with self._get_guard():
+                for sid in sids:
+                    self._sid_to_board.pop(sid, None)
+
+            presence = self.presence(room)
+            if not room.participants and room.cleanup_task is None:
+                room.cleanup_task = asyncio.create_task(
+                    self._expire_room(board_id, room)
+                )
+            return sids, presence
+
     async def _expire_room(self, board_id: int, room: BoardRoom) -> None:
         try:
             await asyncio.sleep(300)
