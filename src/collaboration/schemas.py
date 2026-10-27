@@ -10,6 +10,7 @@ class StrokeStartEvent(BaseModel):
     color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
     width: float = Field(gt=0, le=32)
     point: BoardPointSchema
+    is_eraser: bool | None = None
 
 
 class StrokePointsEvent(BaseModel):

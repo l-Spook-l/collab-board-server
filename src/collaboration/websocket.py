@@ -174,6 +174,7 @@ async def stroke_start(sid: str, payload: dict):
             "width": event.width,
             "points": [event.point.model_dump(mode="json")],
             "user_id": user["id"],
+            "is_eraser": event.is_eraser,
         }
         room.document["strokes"].append(stroke)
         room.dirty = True

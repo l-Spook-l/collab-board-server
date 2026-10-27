@@ -18,6 +18,9 @@ class BoardStrokeSchema(BaseModel):
     width: float = Field(gt=0, le=32)
     points: Annotated[list[BoardPointSchema], Field(min_length=1, max_length=100_000)]
     user_id: int | None = None
+    # Keep the distinction between an old stroke (missing this field) and an
+    # explicitly white pen stroke. The frontend treats legacy white strokes as erasers.
+    is_eraser: bool | None = None
 
 
 class BoardDocumentSchema(BaseModel):
